@@ -1,32 +1,44 @@
 <template>
-  <div v-if="product?.id">
-    <ProductCard :product="product" />
-  </div>
-  <div v-else>Não existe esse produto</div>
+  <section v-if="product" class="max-w-3xl mx-auto space-y-4">
+    <ProductCard :product="product" @onClick="cart.addItem" />
+    <div class="flex gap-3">
+      <Button label="Adicionar ao carrinho" @click="cart.addItem(product)" />
+      <Button
+        label="Ir para checkout"
+        severity="secondary"
+        outlined
+        @click="$router.push({ name: 'checkout' })"
+      />
+    </div>
+  </section>
+  <section v-else class="p-6">
+    <Card>
+      <template #title>Produto não encontrado</template>
+      <template #content>
+        <Button label="Voltar para Home" @click="$router.push({ name: 'home' })" />
+      </template>
+    </Card>
+  </section>
 </template>
 <script lang="ts">
-import { Product } from '@/model/product.model'
 import { defineComponent } from 'vue'
 import ProductCard from '@/components/card/ProductCard.vue'
+import { productsCatalog } from '@/data/products'
+import { useCartStore } from '@/stores/cart'
+
 export default defineComponent({
-  data() {
+  components: { ProductCard },
+  setup() {
+    const cart = useCartStore()
     return {
-      productId: this.$route.params.id,
-      product: {} as Product | undefined,
+      cart,
     }
   },
-  components: { ProductCard },
-  methods: {
-    getProduct() {
-      const product = [new Product('1', 'Guitarra', 'desc', 200, 0.2)].find(
-        (p) => p.id === this.productId,
-      )
-      this.product = product
-      console.log(product)
+  computed: {
+    product() {
+      const productId = String(this.$route.params.id)
+      return productsCatalog.find((p) => p.id === productId)
     },
-  },
-  mounted() {
-    this.getProduct()
   },
 })
 </script>

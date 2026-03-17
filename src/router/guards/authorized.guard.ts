@@ -1,16 +1,23 @@
-export function authorizedGuard(router: any) {
-  router.beforeEach((to: any, from: any, next: any) => {
-    const token = {
-      role: 'admin',
+import type { Router } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+
+export function authorizedGuard(router: Router) {
+  router.beforeEach((to, from, next) => {
+    const authStore = useAuthStore()
+    const roles = to.meta.roles as string[] | undefined
+
+    if (!roles || roles.length === 0) {
+      return next()
     }
-    if (to?.meta?.role) {
-      if (to.meta.role.includes(token.role)) {
-        next()
-      } else {
-        next('/login')
-      }
-    } else {
-      next()
+
+    if (!authStore.role) {
+      return next({ name: 'login' })
     }
+
+    if (roles.includes(authStore.role)) {
+      return next()
+    }
+
+    return next({ name: 'home' })
   })
 }
