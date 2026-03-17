@@ -1,39 +1,48 @@
-import { Product } from './product.model'
-
-export interface CartItem {
+import type { Product } from './product.model'
+export interface ICartItem {
   product: Product
   quantity: number
 }
-
 export class Cart {
-  public list: CartItem[] = []
-
-  constructor(list: CartItem[] = []) {
-    this.list = list
-  }
+  constructor(
+    public list: ICartItem[] = [],
+    public totalPrice: number = 0,
+  ) {}
 
   addItem(product: Product) {
-    const item = this.list.find((i) => i.product.id === product.id)
-    if (item) item.quantity++
-    else this.list.push({ product, quantity: 1 })
+    if (this.productAlreadyExists(product)) {
+      this.list = this.list.map((i) => {
+        return i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+      })
+    } else {
+      this.list.push({ product, quantity: 1 })
+    }
+    this.totalPrice += product.price * (1 - product.discount)
+  }
+  removeItem(product: Product) {
+    if (!this.productAlreadyExists(product)) return
+    const itemQuantity = this.list.find((i) => i.product.id === product.id)?.quantity
+    this.list = this.list.filter((i) => i.product.id !== product.id)
+    this.totalPrice -= product.price * (1 - product.discount) * (itemQuantity ? itemQuantity : 0)
+  }
+  decrementItem(product: Product) {
+    if (!this.productAlreadyExists(product)) return
+    if (this.list.find((i) => i.product.id === product.id)?.quantity === 1) {
+      this.removeItem(product)
+      return
+    }
+    this.list = this.list.map((i) =>
+      i.product.id === product.id ? { ...i, quantity: i.quantity - 1 } : i,
+    )
+    this.totalPrice -= product.price * (1 - product.discount)
   }
 
-  removeOne(productId: number) {
-    const item = this.list.find((i) => i.product.id === productId)
-    if (!item) return
-    if (item.quantity > 1) item.quantity--
-    else this.removeItem(productId)
+  productAlreadyExists(product: Product) {
+    return this.list.some((i) => i.product.id === product.id)
   }
-
-  removeItem(productId: number) {
-    this.list = this.list.filter((i) => i.product.id !== productId)
-  }
-
-  get totalItems() {
-    return this.list.reduce((s, i) => s + i.quantity, 0)
-  }
-
-  get totalPrice() {
-    return this.list.reduce((s, i) => s + i.quantity * i.product.price, 0)
+  getTotalPrice() {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+      this.totalPrice,
+    )
   }
 }

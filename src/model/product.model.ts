@@ -1,13 +1,12 @@
-export interface Category {
-  id: number
-  title: string
-}
-
 export class Product {
   constructor(
-    public id: number,
-    public name: string,
+    public id: string,
+    public title: string,
+    public description: string,
     public price: number,
-    public category: Category,
+    public discount: number,
   ) {}
+  getPrice() {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(this.price)
+  }
 }
